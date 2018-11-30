@@ -29,6 +29,7 @@ func doFetch(tasks chan func()) {
 	}
 }
 
+// Fetch to fetch url
 func Fetch(mac *digest.Mac, job string, checkExists bool, fileListPath, bucket, accessKey, secretKey string,
 	worker int, logFile string) {
 	//open file list to fetch
@@ -150,7 +151,7 @@ func Fetch(mac *digest.Mac, job string, checkExists bool, fileListPath, bucket, 
 	fetchWaitGroup.Wait()
 }
 
-//fetch ts first and m3u8 later
+// fetch ts first and m3u8 later
 func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Client,
 	successLdb *leveldb.DB, notFoundLdb *leveldb.DB) {
 	m3u8Uri, pErr := url.Parse(m3u8Url)
@@ -183,6 +184,7 @@ func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Cli
 	bScanner := bufio.NewScanner(bytes.NewReader(m3u8Data))
 	for bScanner.Scan() {
 		m3u8Line := bScanner.Text()
+		print(m3u8Line)
 
 		if strings.HasPrefix(m3u8Line, "#EXT-X-KEY") || !strings.HasPrefix(m3u8Line, "#") {
 			if strings.HasPrefix(m3u8Line, "#EXT-X-KEY") {
@@ -195,15 +197,15 @@ func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Cli
 			var tsKey string
 			var tsPath string
 			if strings.HasPrefix(m3u8Line, "http://") || strings.HasPrefix(m3u8Line, "https://") {
-				tsUri, pErr := url.Parse(m3u8Line)
+				tsURI, pErr := url.Parse(m3u8Line)
 				if pErr != nil {
 					log.Errorf("invalid ts line, %s", m3u8Line)
 					continue
 				}
 
-				tsPath = tsUri.Path
-				tsKey = strings.TrimPrefix(tsUri.Path, "/")
-				tsDomain = fmt.Sprintf("%s://%s", tsUri.Scheme, tsUri.Host)
+				tsPath = tsURI.Path
+				tsKey = strings.TrimPrefix(tsURI.Path, "/")
+				tsDomain = fmt.Sprintf("%s://%s", tsURI.Scheme, tsURI.Host)
 				tsKeyMap[tsKey] = tsPath
 			} else {
 				if strings.HasPrefix(m3u8Line, "/") {
@@ -235,6 +237,7 @@ func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Cli
 
 					tsKeyMap[tsKey] = tsPath
 				}
+				print(tsKey)
 				tsDomain = fmt.Sprintf("%s://%s", m3u8Uri.Scheme, m3u8Uri.Host)
 			}
 		}

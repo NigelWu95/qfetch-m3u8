@@ -8,6 +8,7 @@ import (
 	"runtime"
 
 	"github.com/qiniu/api.v6/auth/digest"
+
 	"github.com/qiniu/api.v6/conf"
 )
 
@@ -38,8 +39,7 @@ func main() {
   -check-exists: check whether file exists in bucket
   -log="": fetch runtime log file
   -rs-host="": rs host to support specified qos system
-  -io-host="": io host to support specified qos sytem
- version 2.1`)
+  -io-host="": io host to support specified qos system version 2.1`)
 	}
 
 	flag.StringVar(&job, "job", "", "job name to record the progress")
@@ -96,7 +96,8 @@ func main() {
 	}
 
 	mac := digest.Mac{
-		accessKey, []byte(secretKey),
+		AccessKey: accessKey,
+		SecretKey: []byte(secretKey),
 	}
 
 	if rsHost != "" && ioHost != "" {
@@ -104,12 +105,12 @@ func main() {
 		conf.RS_HOST = rsHost
 	} else {
 		//get bucket info
-		bucktInfo, gErr := qfetch.GetBucketInfo(&mac, bucket)
+		bucketInfo, gErr := qfetch.GetBucketInfo(&mac, bucket)
 		if gErr != nil {
 			fmt.Println("Error: get bucket info error", gErr)
 			return
 		} else {
-			switch bucktInfo.Region {
+			switch bucketInfo.Region {
 			case "z0":
 				conf.RS_HOST = "http://rs.qbox.me"
 				conf.IO_HOST = "http://iovip.qbox.me"

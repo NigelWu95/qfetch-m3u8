@@ -8,24 +8,26 @@ import (
 	"github.com/qiniu/rpc"
 )
 
+// BucketInfo to bucket info structure
 type BucketInfo struct {
 	Region string `json:"region"`
 }
 
+// domain of quering bucket
 var (
-	BUCKET_RS_HOST = "http://rs.qiniu.com"
+	BucketRsHost = "http://rs.qiniu.com"
 )
 
 /*
-get bucket info
+GetBucketInfo to get bucket info
 @param mac
 @param bucket - bucket name
 @return bucketInfo, err
 */
 func GetBucketInfo(mac *digest.Mac, bucket string) (bucketInfo BucketInfo, err error) {
 	client := rs.New(mac)
-	bucketUri := fmt.Sprintf("%s/bucket/%s", BUCKET_RS_HOST, bucket)
-	callErr := client.Conn.Call(nil, &bucketInfo, bucketUri)
+	bucketURI := fmt.Sprintf("%s/bucket/%s", BucketRsHost, bucket)
+	callErr := client.Conn.Call(nil, &bucketInfo, bucketURI)
 	if callErr != nil {
 		if v, ok := callErr.(*rpc.ErrorInfo); ok {
 			err = fmt.Errorf("code: %d, %s, xreqid: %s", v.Code, v.Err, v.Reqid)
