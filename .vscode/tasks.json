@@ -4,12 +4,18 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "complie build",
             "type": "shell",
             "command": "cd src && ./build.sh",
             "group": {
                 "kind": "build",
                 "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "focus": true,
+                "echo": false,
+                "panel": "dedicated"
             }
         }
     ]

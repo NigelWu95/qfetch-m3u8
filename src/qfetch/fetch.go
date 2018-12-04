@@ -151,7 +151,7 @@ func Fetch(mac *digest.Mac, job string, checkExists bool, fileListPath, bucket, 
 	fetchWaitGroup.Wait()
 }
 
-// fetch ts first and m3u8 later
+// FetchM3u8 fetch ts first and m3u8 later
 func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Client,
 	successLdb *leveldb.DB, notFoundLdb *leveldb.DB) {
 	m3u8Uri, pErr := url.Parse(m3u8Url)
@@ -184,7 +184,6 @@ func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Cli
 	bScanner := bufio.NewScanner(bytes.NewReader(m3u8Data))
 	for bScanner.Scan() {
 		m3u8Line := bScanner.Text()
-		print(m3u8Line)
 
 		if strings.HasPrefix(m3u8Line, "#EXT-X-KEY") || !strings.HasPrefix(m3u8Line, "#") {
 			if strings.HasPrefix(m3u8Line, "#EXT-X-KEY") {
@@ -205,12 +204,14 @@ func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Cli
 
 				tsPath = tsURI.Path
 				tsKey = strings.TrimPrefix(tsURI.Path, "/")
+				tsKey = strings.Split(tsKey, "?")[0]
 				tsDomain = fmt.Sprintf("%s://%s", tsURI.Scheme, tsURI.Host)
 				tsKeyMap[tsKey] = tsPath
 			} else {
 				if strings.HasPrefix(m3u8Line, "/") {
 					tsPath = m3u8Line
 					tsKey = strings.TrimPrefix(m3u8Line, "/")
+					tsKey = strings.Split(tsKey, "?")[0]
 					tsKeyMap[tsKey] = tsPath
 				} else {
 					//check m3u8 url to find ts path prefix
@@ -234,10 +235,9 @@ func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Cli
 					} else {
 						tsKey = m3u8Line
 					}
-
+					tsKey = strings.Split(tsKey, "?")[0]
 					tsKeyMap[tsKey] = tsPath
 				}
-				print(tsKey)
 				tsDomain = fmt.Sprintf("%s://%s", m3u8Uri.Scheme, m3u8Uri.Host)
 			}
 		}
