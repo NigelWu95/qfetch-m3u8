@@ -41,7 +41,7 @@ func GetBucketInfo(mac *digest.Mac, bucket string) (bucketInfo BucketInfo, err e
 	return
 }
 
-func putFile(localFile string, bucket string, key string, accessKey, secretKey string) {
+func PutFile(localFile string, bucket string, key string, accessKey, secretKey string) (ret storage.PutRet, err error) {
 	putPolicy := storage.PutPolicy{
 		Scope: bucket,
 	}
@@ -50,11 +50,10 @@ func putFile(localFile string, bucket string, key string, accessKey, secretKey s
 	cfg := storage.Config{}
 	cfg.Zone = &storage.ZoneHuadong
 	formUploader := storage.NewFormUploader(&cfg)
-	ret := storage.PutRet{}
-	err := formUploader.PutFile(context.Background(), &ret, upToken, key, localFile, nil)
+	ret = storage.PutRet{}
+	err = formUploader.PutFile(context.Background(), &ret, upToken, key, localFile, nil)
 	if err != nil {
 		fmt.Println(err)
-		return
 	}
-	fmt.Println(ret)
+	return
 }

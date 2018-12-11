@@ -3,13 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/qiniu/api.v6/auth/digest"
+	"github.com/qiniu/api.v6/conf"
 	"os"
 	"qfetch"
 	"runtime"
-
-	"github.com/qiniu/api.v6/auth/digest"
-
-	"github.com/qiniu/api.v6/conf"
 )
 
 func main() {
@@ -129,8 +127,9 @@ func main() {
 			}
 		}
 	}
-	mu3u8List := qfetch.Fetch(&mac, job, checkExists, file, bucket, worker, logFile)
-	for i := mu3u8List.Front(); i != nil; i = i.Next() {
-		fmt.Println(i.Value)
+	m3u8s := qfetch.Fetch(&mac, job, checkExists, file, bucket, worker, logFile)
+	for i := range m3u8s {
+		fmt.Println(m3u8s[i])
+		//qfetch.PutFile(m3u8s[i], bucket, strings.TrimPrefix(m3u8s[i], "new_"), accessKey, secretKey)
 	}
 }

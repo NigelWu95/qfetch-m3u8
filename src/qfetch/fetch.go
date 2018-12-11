@@ -3,7 +3,6 @@ package qfetch
 import (
 	"bufio"
 	"bytes"
-	"container/list"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -31,7 +30,7 @@ func doFetch(tasks chan func()) {
 
 // Fetch to fetch url
 func Fetch(mac *digest.Mac, job string, checkExists bool, fileListPath, bucket string, worker int,
-	logFile string) (m3u8List *list.List) {
+	logFile string) (m3u8s []string) {
 
 	//open file list to fetch
 	fh, openErr := os.Open(fileListPath)
@@ -84,7 +83,7 @@ func Fetch(mac *digest.Mac, job string, checkExists bool, fileListPath, bucket s
 	})
 
 	fetchWaitGroup := sync.WaitGroup{}
-	rewrittenM3u8List := list.New()
+	var rewrittenM3U8s []string
 
 	//scan each line and add task
 	bReader := bufio.NewScanner(fh)
@@ -146,13 +145,14 @@ func Fetch(mac *digest.Mac, job string, checkExists bool, fileListPath, bucket s
 		fetchTasks <- func() {
 			defer fetchWaitGroup.Done()
 			var newM3u8File = FetchM3u8(bucket, m3u8Key, m3u8Url, checkExists, &client, successLdb, notFoundLdb)
-			rewrittenM3u8List.PushBack(newM3u8File)
+			i := append(rewrittenM3U8s, newM3u8File)
+			rewrittenM3U8s = i
 		}
 	}
 
 	//wait for all the fetch done
 	fetchWaitGroup.Wait()
-	return rewrittenM3u8List
+	return rewrittenM3U8s
 }
 
 // FetchM3u8 fetch ts first and m3u8 later
