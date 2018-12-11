@@ -24,10 +24,7 @@ _testmain.go
 *.prof
 
 .vscode
-.vscode/*
 
 .idea
-.idea/*
 
 bin
-bin/*
