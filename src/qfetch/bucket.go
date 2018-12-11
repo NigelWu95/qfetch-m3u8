@@ -1,10 +1,13 @@
 package qfetch
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/qiniu/api.v6/auth/digest"
 	"github.com/qiniu/api.v6/rs"
+	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/storage"
 	"github.com/qiniu/rpc"
 )
 
@@ -36,4 +39,22 @@ func GetBucketInfo(mac *digest.Mac, bucket string) (bucketInfo BucketInfo, err e
 		}
 	}
 	return
+}
+
+func putFile(localFile string, bucket string, key string, accessKey, secretKey string) {
+	putPolicy := storage.PutPolicy{
+		Scope: bucket,
+	}
+	mac := qbox.NewMac(accessKey, secretKey)
+	upToken := putPolicy.UploadToken(mac)
+	cfg := storage.Config{}
+	cfg.Zone = &storage.ZoneHuadong
+	formUploader := storage.NewFormUploader(&cfg)
+	ret := storage.PutRet{}
+	err := formUploader.PutFile(context.Background(), &ret, upToken, key, localFile, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(ret)
 }

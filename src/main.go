@@ -129,5 +129,8 @@ func main() {
 			}
 		}
 	}
-	qfetch.Fetch(&mac, job, checkExists, file, bucket, accessKey, secretKey, worker, logFile)
+	mu3u8List := qfetch.Fetch(&mac, job, checkExists, file, bucket, worker, logFile)
+	for i := mu3u8List.Front(); i != nil; i = i.Next() {
+		fmt.Println(i.Value)
+	}
 }

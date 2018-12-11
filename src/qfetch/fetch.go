@@ -3,6 +3,7 @@ package qfetch
 import (
 	"bufio"
 	"bytes"
+	"container/list"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -29,8 +30,9 @@ func doFetch(tasks chan func()) {
 }
 
 // Fetch to fetch url
-func Fetch(mac *digest.Mac, job string, checkExists bool, fileListPath, bucket, accessKey, secretKey string,
-	worker int, logFile string) {
+func Fetch(mac *digest.Mac, job string, checkExists bool, fileListPath, bucket string, worker int,
+	logFile string) (m3u8List *list.List) {
+
 	//open file list to fetch
 	fh, openErr := os.Open(fileListPath)
 	if openErr != nil {
@@ -82,6 +84,7 @@ func Fetch(mac *digest.Mac, job string, checkExists bool, fileListPath, bucket, 
 	})
 
 	fetchWaitGroup := sync.WaitGroup{}
+	rewrittenM3u8List := list.New()
 
 	//scan each line and add task
 	bReader := bufio.NewScanner(fh)
@@ -142,17 +145,19 @@ func Fetch(mac *digest.Mac, job string, checkExists bool, fileListPath, bucket, 
 		fetchWaitGroup.Add(1)
 		fetchTasks <- func() {
 			defer fetchWaitGroup.Done()
-			FetchM3u8(bucket, m3u8Key, m3u8Url, checkExists, &client, successLdb, notFoundLdb)
+			var newM3u8File = FetchM3u8(bucket, m3u8Key, m3u8Url, checkExists, &client, successLdb, notFoundLdb)
+			rewrittenM3u8List.PushBack(newM3u8File)
 		}
 	}
 
 	//wait for all the fetch done
 	fetchWaitGroup.Wait()
+	return rewrittenM3u8List
 }
 
 // FetchM3u8 fetch ts first and m3u8 later
 func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Client, successLdb *leveldb.DB,
-	notFoundLdb *leveldb.DB) {
+	notFoundLdb *leveldb.DB) (m3u8File string) {
 
 	m3u8Uri, pErr := url.Parse(m3u8Url)
 	if pErr != nil {
@@ -321,5 +326,5 @@ func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Cli
 	//	}
 	//}
 
-	return
+	return "new_" + m3u8Key
 }
