@@ -145,8 +145,7 @@ func Fetch(mac *digest.Mac, job string, checkExists bool, fileListPath, bucket s
 		fetchTasks <- func() {
 			defer fetchWaitGroup.Done()
 			var newM3u8File = FetchM3u8(bucket, m3u8Key, m3u8Url, checkExists, &client, successLdb, notFoundLdb)
-			i := append(rewrittenM3U8s, newM3u8File)
-			rewrittenM3U8s = i
+			rewrittenM3U8s = append(rewrittenM3U8s, newM3u8File)
 		}
 	}
 
@@ -293,15 +292,15 @@ func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Cli
 		log.Infof("fetch ts %s => %s doing", tsURL, tsKey)
 
 		//fetch each ts
-		//_, fErr := client.Fetch(nil, bucket, tsKey, tsURL)
-		//if fErr != nil {
-		//	tsFetchHasError = true
-		//	tsFetchErrorCount++
-		//	log.Errorf("fetch ts %s error, %s", tsURL, fErr)
-		//} else {
-		//	log.Infof("fetch ts %s => %s success", tsURL, tsKey)
-		//	successLdb.Put([]byte(tsURL), []byte(tsKey), nil)
-		//}
+		_, fErr := client.Fetch(nil, bucket, tsKey, tsURL)
+		if fErr != nil {
+			tsFetchHasError = true
+			tsFetchErrorCount++
+			log.Errorf("fetch ts %s error, %s", tsURL, fErr)
+		} else {
+			log.Infof("fetch ts %s => %s success", tsURL, tsKey)
+			successLdb.Put([]byte(tsURL), []byte(tsKey), nil)
+		}
 	}
 
 	//fetch m3u8
