@@ -15,7 +15,6 @@ import (
 	"github.com/qiniu/api.v6/auth/digest"
 	"github.com/qiniu/api.v6/rs"
 	"github.com/qiniu/log"
-	"github.com/qiniu/rpc"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -152,8 +151,9 @@ func Fetch(mac *digest.Mac, job string, checkExists bool, fileListPath, bucket, 
 }
 
 // FetchM3u8 fetch ts first and m3u8 later
-func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Client,
-	successLdb *leveldb.DB, notFoundLdb *leveldb.DB) {
+func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Client, successLdb *leveldb.DB,
+	notFoundLdb *leveldb.DB) {
+
 	m3u8Uri, pErr := url.Parse(m3u8Url)
 	if pErr != nil {
 		log.Errorf("invalid m3u8 url, %s", pErr)
@@ -175,6 +175,12 @@ func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Cli
 
 	//close body
 	m3u8Resp.Body.Close()
+
+	m3u8RewriteFh, createErr := os.Create("new_" + m3u8Key)
+	if createErr != nil {
+		log.Errorf("create m3u8 rewrite file error, %s", createErr)
+	}
+	defer m3u8RewriteFh.Close()
 
 	//scan ts
 	tsKeyMap := make(map[string]string)
@@ -240,6 +246,20 @@ func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Cli
 				}
 				tsDomain = fmt.Sprintf("%s://%s", m3u8Uri.Scheme, m3u8Uri.Host)
 			}
+
+			_, err := m3u8RewriteFh.WriteString(tsKey + "\n")
+			for err != nil {
+				log.Errorf("write %s, %s", tsKey, err)
+				_, writeErr := m3u8RewriteFh.WriteString(tsKey + "\n")
+				err = writeErr
+			}
+		} else {
+			_, err := m3u8RewriteFh.WriteString(m3u8Line + "\n")
+			for err != nil {
+				log.Errorf("write %s, %s", m3u8Line, err)
+				_, writeErr := m3u8RewriteFh.WriteString(m3u8Line + "\n")
+				err = writeErr
+			}
 		}
 	}
 
@@ -268,15 +288,15 @@ func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Cli
 		log.Infof("fetch ts %s => %s doing", tsURL, tsKey)
 
 		//fetch each ts
-		_, fErr := client.Fetch(nil, bucket, tsKey, tsURL)
-		if fErr != nil {
-			tsFetchHasError = true
-			tsFetchErrorCount++
-			log.Errorf("fetch ts %s error, %s", tsURL, fErr)
-		} else {
-			log.Infof("fetch ts %s => %s success", tsURL, tsKey)
-			successLdb.Put([]byte(tsURL), []byte(tsKey), nil)
-		}
+		//_, fErr := client.Fetch(nil, bucket, tsKey, tsURL)
+		//if fErr != nil {
+		//	tsFetchHasError = true
+		//	tsFetchErrorCount++
+		//	log.Errorf("fetch ts %s error, %s", tsURL, fErr)
+		//} else {
+		//	log.Infof("fetch ts %s => %s success", tsURL, tsKey)
+		//	successLdb.Put([]byte(tsURL), []byte(tsKey), nil)
+		//}
 	}
 
 	//fetch m3u8
@@ -286,20 +306,20 @@ func FetchM3u8(bucket, m3u8Key, m3u8Url string, checkExists bool, client *rs.Cli
 	}
 
 	log.Infof("fetch m3u8 %s => %s doing", m3u8Url, m3u8Key)
-	_, fErr := client.Fetch(nil, bucket, m3u8Key, m3u8Url)
-	if fErr == nil {
-		log.Infof("fetch m3u8 %s => %s success", m3u8Url, m3u8Key)
-		successLdb.Put([]byte(m3u8Url), []byte(m3u8Key), nil)
-	} else {
-		if v, ok := fErr.(*rpc.ErrorInfo); ok {
-			if v.Code == 404 {
-				notFoundLdb.Put([]byte(m3u8Url), []byte(m3u8Key), nil)
-			}
-			log.Errorf("fetch m3u8 %s error, %s", m3u8Url, v.Err)
-		} else {
-			log.Errorf("fetch m3u8 %s error, %s", m3u8Url, fErr)
-		}
-	}
+	//_, fErr := client.Fetch(nil, bucket, m3u8Key, m3u8Url)
+	//if fErr == nil {
+	//	log.Infof("fetch m3u8 %s => %s success", m3u8Url, m3u8Key)
+	//	successLdb.Put([]byte(m3u8Url), []byte(m3u8Key), nil)
+	//} else {
+	//	if v, ok := fErr.(*rpc.ErrorInfo); ok {
+	//		if v.Code == 404 {
+	//			notFoundLdb.Put([]byte(m3u8Url), []byte(m3u8Key), nil)
+	//		}
+	//		log.Errorf("fetch m3u8 %s error, %s", m3u8Url, v.Err)
+	//	} else {
+	//		log.Errorf("fetch m3u8 %s error, %s", m3u8Url, fErr)
+	//	}
+	//}
 
 	return
 }
