@@ -131,10 +131,14 @@ func main() {
 	m3u8s := qfetch.Fetch(&mac, job, checkExists, file, bucket, worker, logFile)
 	//fmt.Println(m3u8s)
 	for i := range m3u8s {
-		fmt.Println(m3u8s[i])
 		_, err := qfetch.PutFile(m3u8s[i], bucket, strings.TrimPrefix(m3u8s[i], "new_"), accessKey, secretKey)
 		if err != nil {
 			fmt.Println("Upload new m3u8 file failed, ", err)
+		}
+		deleteErr := os.Remove(m3u8s[i])
+		for deleteErr != nil {
+			fmt.Println("Delete new m3u8 file failed, ", deleteErr)
+			deleteErr = os.Remove(m3u8s[i])
 		}
 	}
 }
