@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 DIR=$(cd ../; pwd)
 export GOPATH=$GOPATH:$DIR
 GOOS="darwin" GOARCH="amd64" go build -o "../bin/qfetch-m3u8_darwin_amd64" main.go 
