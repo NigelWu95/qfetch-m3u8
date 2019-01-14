@@ -135,10 +135,15 @@ func main() {
 		if err != nil {
 			fmt.Println("Upload new m3u8 file failed, ", err)
 		}
-		deleteErr := os.Remove(m3u8s[i])
-		for deleteErr != nil {
-			fmt.Println("Delete new m3u8 file failed, ", deleteErr)
-			deleteErr = os.Remove(m3u8s[i])
+
+		// add check if file exists or not
+		_, statErr := os.Stat(m3u8s[i])
+		if statErr == nil {
+			deleteErr := os.Remove(m3u8s[i])
+			for deleteErr != nil {
+				fmt.Println("Delete new m3u8 file failed, ", deleteErr)
+				deleteErr = os.Remove(m3u8s[i])
+			}
 		}
 	}
 }
